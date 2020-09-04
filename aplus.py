@@ -4,7 +4,7 @@ import canvasapi
 import click
 import colorama
 
-from aplus.aplus import APlus
+from aplus.aplus import APlus, NoAvailableCodesException
 
 
 def get_aplus(canvas, course_id: str) -> Optional[APlus]:
@@ -48,7 +48,11 @@ def aplus(show: bool, token: str, base_url: str, course_id: str, code: str):
         show_attendance(aplus)
         return
 
-    aplus.submit_code(code)
+    try:
+        aplus.submit_code(code)
+    except NoAvailableCodesException:
+        print("No open codes")
+        exit(2)
 
 
 if __name__ == "__main__":

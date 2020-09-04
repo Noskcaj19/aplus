@@ -8,6 +8,10 @@ from canvasapi.external_tool import ExternalTool
 from aplus.colors import Colors
 
 
+class NoAvailableCodesException(Exception):
+    pass
+
+
 class APlus:
     session: requests.Session
     body: str
@@ -60,8 +64,11 @@ class APlus:
                 )
 
     def submit_code(self, code: str):
-        link = re.findall(r'<li ><i class="fa fa-.*?" aria-hidden="true"></i><a href="(.+)">.+</a></li>',
-                          self.body)[0]
+        links = re.findall(r'<li ><i class="fa fa-.*?" aria-hidden="true"></i><a href="(.+)">.+</a></li>',
+                          self.body)
+        if len(links) == 0:
+            raise NoAvailableCodesException()
+        link = links[0]
 
         submission_page = self.session.get(self.base_url + link)
         form_entries = re.findall(r'<input type="hidden" name="(.*?)" id=".*" value="(.*)" />', submission_page.text)
