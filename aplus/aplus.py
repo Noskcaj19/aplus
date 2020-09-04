@@ -42,7 +42,7 @@ class APlus:
 
             date = datetime.strptime(date_match, "%d_%b_%y")
             print(f'{colorama.Style.BRIGHT}{date.strftime("%B %d %Y")}{colorama.Style.NORMAL}'
-                  f'{" (future)" if date > datetime.now() else ""}')
+                  f'{" (today)" if is_same_day(date, datetime.now()) else ""}')
             if len(attendance_matches) == 0:
                 print("  (Nothing on this day)")
             for (state, course) in attendance_matches:
@@ -56,6 +56,10 @@ class APlus:
                     f'  {colorama.Style.BRIGHT}{state_icon}{colorama.Style.NORMAL}'
                     f' {reformat_attendance_time(html.unescape(course).strip())}'
                 )
+
+
+def is_same_day(one: datetime, two: datetime) -> bool:
+    return one.year == two.year and one.month == two.month and one.day == two.day
 
 
 def reformat_attendance_time(string: str):
