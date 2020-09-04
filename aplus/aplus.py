@@ -36,26 +36,38 @@ class APlus:
 
         for (date_match, attendance_day_match) in attendance_day_matches:
             attendance_matches = re.findall(
-                r'<li (?:class="stv_disabled")?><i class="fa (.+?)" aria-hidden="true"></i>(.*?)</li>',
+                r'<li (?:class="stv_disabled")?><i class="fa (.+?)" aria-hidden="true"></i>(?:<a href="(.+?)">'
+                r'(.+?)</a>|(.+?))</li>',
                 attendance_day_match,
             )
 
             date = datetime.strptime(date_match, "%d_%b_%y")
-            print(f'{colorama.Style.BRIGHT}{date.strftime("%B %d %Y")}{colorama.Style.NORMAL}'
+            print(f'{Colors.bright(date.strftime("%B %d %Y"))}'
                   f'{" (today)" if is_same_day(date, datetime.now()) else ""}')
             if len(attendance_matches) == 0:
                 print("  (Nothing on this day)")
-            for (state, course) in attendance_matches:
-                if state == "fa-check":
+            for (icon, link, active_course, inactive_course) in attendance_matches:
+                if icon == "fa-check":
                     state_icon = "✔"
-                elif state == "fa-times":
+                elif icon == "fa-times":
                     state_icon = "✖"
                 else:
                     state_icon = "?"
+                class_entry = reformat_attendance_time(html.unescape(active_course or inactive_course).strip())
                 print(
-                    f'  {colorama.Style.BRIGHT}{state_icon}{colorama.Style.NORMAL}'
-                    f' {reformat_attendance_time(html.unescape(course).strip())}'
+                    f'  {Colors.bright(state_icon)}'
+                    f' {Colors.active_course(class_entry) if active_course else class_entry}'
                 )
+
+
+class Colors:
+    @staticmethod
+    def bright(string: str):
+        return colorama.Style.BRIGHT + string + colorama.Style.NORMAL
+
+    @staticmethod
+    def active_course(string: str):
+        return colorama.Fore.CYAN + colorama.Style.BRIGHT + string + colorama.Fore.RESET + colorama.Style.NORMAL
 
 
 def is_same_day(one: datetime, two: datetime) -> bool:
