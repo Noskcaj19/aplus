@@ -1,18 +1,17 @@
 import html
 import re
 from datetime import datetime
-from typing import Optional
 
-import canvasapi
-import click
-import colorama
 import requests
 from canvasapi.external_tool import ExternalTool
+
+from aplus.colors import Colors
 
 
 class APlus:
     session: requests.Session
     body: str
+    base_url: str
 
     def __init__(self, tool: ExternalTool) -> None:
         super().__init__()
@@ -25,6 +24,7 @@ class APlus:
             raise Exception("Unable to locate form keys")
         resp = self.session.post(tool.url, {k: v for (k, v) in form_entries})
 
+        self.base_url = resp.url.split('?', 1)[0]
         self.body = resp.text
 
     def print_attendance(self):
@@ -43,7 +43,7 @@ class APlus:
 
             date = datetime.strptime(date_match, "%d_%b_%y")
             print(f'{Colors.bright(date.strftime("%B %d %Y"))}'
-                  f'{" (today)" if is_same_day(date, datetime.now()) else ""}')
+                  f'{" (today)" if self._is_same_day(date, datetime.now()) else ""}')
             if len(attendance_matches) == 0:
                 print("  (Nothing on this day)")
             for (icon, link, active_course, inactive_course) in attendance_matches:
@@ -53,76 +53,41 @@ class APlus:
                     state_icon = "✖"
                 else:
                     state_icon = "?"
-                class_entry = reformat_attendance_time(html.unescape(active_course or inactive_course).strip())
+                class_entry = self._reformat_attendance_time(html.unescape(active_course or inactive_course).strip())
                 print(
                     f'  {Colors.bright(state_icon)}'
                     f' {Colors.active_course(class_entry) if active_course else class_entry}'
                 )
 
+    def submit_code(self, code: str):
+        link = re.findall(r'<li ><i class="fa fa-.*?" aria-hidden="true"></i><a href="(.+)">.+</a></li>',
+                          self.body)[0]
 
-class Colors:
+        submission_page = self.session.get(self.base_url + link)
+        form_entries = re.findall(r'<input type="hidden" name="(.*?)" id=".*" value="(.*)" />', submission_page.text)
+
+        submit_data = re.findall(r'<input type="submit" name="(.*)" value="(.*)" id=".*" class=".*" />',
+                                 submission_page.text)[0]
+        form_entries.append(submit_data)
+
+        input_key_name = \
+            re.findall(r'<input name="(.*)" type="text" id=".*" placeholder=".*" />', submission_page.text)[0]
+        form_entries.append((input_key_name, code))
+
+        resp = self.session.post(self.base_url + link,
+                                 {k: v for (k, v) in form_entries})
+
+        if not (resp.status_code == 302 or resp.status_code == 200):
+            raise Exception(f"Unknown status code: {resp.status_code}")
+        else:
+            print("success")
+
     @staticmethod
-    def bright(string: str):
-        return colorama.Style.BRIGHT + string + colorama.Style.NORMAL
+    def _is_same_day(one: datetime, two: datetime) -> bool:
+        return one.year == two.year and one.month == two.month and one.day == two.day
 
     @staticmethod
-    def active_course(string: str):
-        return colorama.Fore.CYAN + colorama.Style.BRIGHT + string + colorama.Fore.RESET + colorama.Style.NORMAL
-
-
-def is_same_day(one: datetime, two: datetime) -> bool:
-    return one.year == two.year and one.month == two.month and one.day == two.day
-
-
-def reformat_attendance_time(string: str):
-    time_end = string.index("m") + 1
-    time = datetime.strptime(string[:time_end], "%I:%M %p")
-    return time.strftime("%I:%M %p") + string[time_end:]
-
-
-def get_aplus(canvas, course_id: str) -> Optional[APlus]:
-    for tool in canvas.get_course(course_id).get_external_tools(include_parents=True):
-        if "aPlus" not in tool.name:
-            continue
-        return APlus(tool)
-
-
-def show_attendance(aplus: APlus):
-    aplus.print_attendance()
-
-
-def show_attendance_callback(ctx: click.Context, _p: click.Option, v: bool):
-    if not v:
-        return v
-    for opt in ctx.command.params:
-        if opt.name != "code":
-            continue
-        opt.required = False
-    return v
-
-
-@click.command()
-@click.option("-s", "--show", is_flag=True, callback=show_attendance_callback, is_eager=True,
-              help="Show attendance data")
-@click.option("-t", "--token", required=True, type=str, envvar="CANVAS_TOKEN",
-              help="Canvas LMS REST API token generated in settings")
-@click.option("-u", "--base-url", required=True, type=str,
-              help="Base url to your Canvas instance")
-@click.option("-c", "--course-id", required=True, type=str,
-              help="Course id to any course with A+ attendance enable")
-@click.argument("code")
-def aplus(show: bool, token: str, base_url: str, course_id: str, code: str):
-    colorama.init()
-    canvas = canvasapi.Canvas(base_url, token)
-
-    aplus = get_aplus(canvas, course_id)
-
-    if show:
-        show_attendance(aplus)
-        return
-
-    print("TODO: Implement code submission")
-
-
-if __name__ == "__main__":
-    aplus()
+    def _reformat_attendance_time(string: str):
+        time_end = string.index("m") + 1
+        time = datetime.strptime(string[:time_end], "%I:%M %p")
+        return time.strftime("%I:%M %p") + string[time_end:]
