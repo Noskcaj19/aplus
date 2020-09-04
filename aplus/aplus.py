@@ -80,7 +80,7 @@ def reformat_attendance_time(string: str):
     return time.strftime("%I:%M %p") + string[time_end:]
 
 
-def get_aplus(canvas, course_id) -> Optional[APlus]:
+def get_aplus(canvas, course_id: str) -> Optional[APlus]:
     for tool in canvas.get_course(course_id).get_external_tools(include_parents=True):
         if "aPlus" not in tool.name:
             continue
@@ -91,7 +91,7 @@ def show_attendance(aplus: APlus):
     aplus.print_attendance()
 
 
-def show_attendance_callback(ctx, _p, v):
+def show_attendance_callback(ctx: click.Context, _p: click.Option, v: bool):
     if not v:
         return v
     for opt in ctx.command.params:
@@ -111,7 +111,7 @@ def show_attendance_callback(ctx, _p, v):
 @click.option("-c", "--course-id", required=True, type=str,
               help="Course id to any course with A+ attendance enable")
 @click.argument("code")
-def aplus(show, token, base_url, course_id, code):
+def aplus(show: bool, token: str, base_url: str, course_id: str, code: str):
     colorama.init()
     canvas = canvasapi.Canvas(base_url, token)
 
