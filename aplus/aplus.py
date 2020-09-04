@@ -43,19 +43,19 @@ class APlus:
 
             date = datetime.strptime(date_match, "%d_%b_%y")
             print(f'{Colors.bright(date.strftime("%B %d %Y"))}'
-                  f'{" (today)" if self._is_same_day(date, datetime.now()) else ""}')
+                  f'{Colors.today(" (today)") if self._is_same_day(date, datetime.now()) else ""}')
             if len(attendance_matches) == 0:
                 print("  (Nothing on this day)")
             for (icon, link, active_course, inactive_course) in attendance_matches:
                 if icon == "fa-check":
-                    state_icon = "✔"
+                    state_icon = Colors.check("✔")
                 elif icon == "fa-times":
-                    state_icon = "✖"
+                    state_icon = Colors.error("✖")
                 else:
-                    state_icon = "?"
+                    state_icon = Colors.question("?")
                 class_entry = self._reformat_attendance_time(html.unescape(active_course or inactive_course).strip())
                 print(
-                    f'  {Colors.bright(state_icon)}'
+                    f'  {state_icon}'
                     f' {Colors.active_course(class_entry) if active_course else class_entry}'
                 )
 
