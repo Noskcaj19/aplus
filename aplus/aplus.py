@@ -23,10 +23,10 @@ class APlus:
 
         url = tool.get_sessionless_launch_url()
         resp = self.session.get(url)
-        form_entries = re.findall(r' <input type="hidden" name="(.*?)" id=".*" value="(.*?)" />', resp.text)
+        form_entries = re.findall(r'<input type="hidden" name="(.*?)" id=".*" value="(.*?)" />', resp.text)
         if form_entries is None:
             raise Exception("Unable to locate form keys")
-        resp = self.session.post(tool.url, {k: v for (k, v) in form_entries})
+        resp = self.session.post(tool.url, {k: html.unescape(v) for (k, v) in form_entries})
 
         self.base_url = resp.url.split('?', 1)[0]
         self.body = resp.text
