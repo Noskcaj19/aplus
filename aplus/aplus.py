@@ -86,6 +86,8 @@ class APlus:
 
         if not (resp.status_code == 302 or resp.status_code == 200):
             raise Exception(f"Unknown status code: {resp.status_code}")
+        elif 'class="errorMessage"' in resp.text:
+            print('error')
         else:
             print("success")
 
