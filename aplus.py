@@ -29,14 +29,32 @@ def show_attendance_callback(ctx: click.Context, _p: click.Option, v: bool):
 
 
 @click.command()
-@click.option("-s", "--show", is_flag=True, callback=show_attendance_callback, is_eager=True,
-              help="Show attendance data")
-@click.option("-t", "--token", required=True, type=str, envvar="CANVAS_TOKEN",
-              help="Canvas LMS API token generated in settings")
-@click.option("-u", "--base-url", required=True, type=str,
-              help="Base url to your Canvas instance")
-@click.option("-c", "--course-id", required=True, type=str,
-              help="Course id to any course with A+ attendance enable")
+@click.option(
+    "-s",
+    "--show",
+    is_flag=True,
+    callback=show_attendance_callback,
+    is_eager=True,
+    help="Show attendance data",
+)
+@click.option(
+    "-t",
+    "--token",
+    required=True,
+    type=str,
+    envvar="CANVAS_TOKEN",
+    help="Canvas LMS API token generated in settings",
+)
+@click.option(
+    "-u", "--base-url", required=True, type=str, help="Base url to your Canvas instance"
+)
+@click.option(
+    "-c",
+    "--course-id",
+    required=True,
+    type=str,
+    help="Course id to any course with A+ attendance enable",
+)
 @click.argument("code")
 def aplus(show: bool, token: str, base_url: str, course_id: str, code: str):
     colorama.init()

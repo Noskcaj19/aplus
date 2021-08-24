@@ -12,11 +12,23 @@ class Colors:
 
     @staticmethod
     def check(string: str):
-        return colorama.Style.BRIGHT + colorama.Fore.GREEN + string + colorama.Style.NORMAL + colorama.Fore.RESET
+        return (
+            colorama.Style.BRIGHT
+            + colorama.Fore.GREEN
+            + string
+            + colorama.Style.NORMAL
+            + colorama.Fore.RESET
+        )
 
     @staticmethod
     def error(string: str):
-        return colorama.Style.BRIGHT + colorama.Fore.RED + string + colorama.Style.NORMAL + colorama.Fore.RESET
+        return (
+            colorama.Style.BRIGHT
+            + colorama.Fore.RED
+            + string
+            + colorama.Style.NORMAL
+            + colorama.Fore.RESET
+        )
 
     @staticmethod
     def today(string: str):
@@ -24,4 +36,10 @@ class Colors:
 
     @staticmethod
     def active_course(string: str):
-        return colorama.Fore.CYAN + colorama.Style.BRIGHT + string + colorama.Fore.RESET + colorama.Style.NORMAL
+        return (
+            colorama.Fore.CYAN
+            + colorama.Style.BRIGHT
+            + string
+            + colorama.Fore.RESET
+            + colorama.Style.NORMAL
+        )
