@@ -35,6 +35,46 @@ class APlus:
         self.base_url = resp.url.split("?", 1)[0]
         self.body = resp.text
 
+    def get_history(self):
+        attendance_day_matches = re.findall(
+            r'<div class="dayPanel" id="dayPanel_(.*?)" style="display:none;">(?:<div>\(Nothing on this day\)</div>|'
+            r'<ul class="stv_list">(.+?)</ul>)</div>',
+            self.body,
+        )
+        out = []
+        for (date_match, attendance_day_match) in attendance_day_matches:
+
+            attendance_matches = re.findall(
+                r'<li (?:class="stv_disabled")?><i class="fa (.+?)" aria-hidden="true"></i>(?:<a href="(.+?)">'
+                r"(.+?)</a>|(.+?))</li>",
+                attendance_day_match,
+            )
+            current_date = []
+            date = datetime.strptime(date_match, "%d_%b_%y")
+            for (icon, link, active_course, inactive_course) in attendance_matches:
+                if icon == "fa-check":
+                    state = "submitted"
+                elif icon == "fa-times":
+                    state = "not-submitted"
+                else:
+                    state = "unknown"
+                class_entry = self._reformat_attendance_time(
+                    html.unescape(active_course or inactive_course).strip()
+                )
+                current_date.append(
+                    (
+                        date,
+                        {
+                            "link": link,
+                            "class_entry": class_entry,
+                            "active": bool(active_course),
+                            "state": state,
+                        },
+                    )
+                )
+            out.append(current_date)
+        return out
+
     def print_attendance(self):
         attendance_day_matches = re.findall(
             r'<div class="dayPanel" id="dayPanel_(.*?)" style="display:none;">(?:<div>\(Nothing on this day\)</div>|'
