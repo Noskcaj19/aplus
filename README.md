@@ -16,5 +16,7 @@ This tool lets you view your A+ attendance and submit codes if you can access A+
 
 An API token can be created at `<canvas-base-url>/profile/settings` under "Approved Integrations:".
 The token can also be passed through the `$CANVAS_TOKEN` environment variable.
+See the [Cavnas help page](https://community.canvaslms.com/t5/Student-Guide/How-do-I-manage-API-access-tokens-as-a-student/ta-p/273) for more info.
 
 The course id can be found by accessing a course page and looking at the url: `<canvas-base-url>/courses/<course-id>`
+Note: The course id included in the command **does not** need to be the same as the course you are submitting the code for.  Any course id works, ideally a course with A+ codes.
