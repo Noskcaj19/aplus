@@ -8,9 +8,15 @@ from aplus.aplus import APlus, NoAvailableCodesException
 
 
 def get_aplus(canvas, course_id: Optional[str]) -> Optional[APlus]:
-    for tool in canvas.get_course(
+    print("getting courses")
+    f = canvas.get_course(
         course_id or canvas.get_courses()[0].id
-    ).get_external_tools(include_parents=True):
+    )
+    print("done courses")
+    print("getting tools")
+    x = f.get_external_tools(include_parents=True)
+    print("done tools")
+    for tool in x:
         if "aPlus" not in tool.name:
             continue
         return APlus(tool)
@@ -59,9 +65,13 @@ def show_attendance_callback(ctx: click.Context, _p: click.Option, v: bool):
 @click.argument("code")
 def aplus(show: bool, token: str, base_url: str, course_id: str, code: str):
     colorama.init()
+    print(1)
     canvas = canvasapi.Canvas(base_url, token)
 
+    print(2)
     aplus = get_aplus(canvas, course_id)
+    print(3)
+
 
     if show:
         show_attendance(aplus)

@@ -1,11 +1,13 @@
 import html
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from canvasapi.external_tool import ExternalTool
 
 from aplus.colors import Colors
+
+LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 
 
 class NoAvailableCodesException(Exception):
@@ -24,7 +26,7 @@ class APlus:
         url = tool.get_sessionless_launch_url()
         resp = self.session.get(url)
         form_entries = re.findall(
-            r'<input type="hidden" name="(.*?)" id=".*" value="(.*?)" />', resp.text
+            r'<input type="hidden" name="(.*?)" id=".*?" value="(.*?)" />', resp.text
         )
         if form_entries is None:
             raise Exception("Unable to locate form keys")
@@ -113,27 +115,27 @@ class APlus:
 
     def submit_code(self, code: str):
         links = re.findall(
-            r'<li ><i class="fa fa-.*?" aria-hidden="true"></i><a href="(.+)">.+</a></li>',
+            r'<li ><i class="fa fa-.*?" aria-hidden="true"></i><a href="(.+?)">.+?</a></li>',
             self.body,
         )
         if len(links) == 0:
             raise NoAvailableCodesException()
         link = links[0]
 
-        submission_page = self.session.get(self.base_url + link)
+        submission_page = self.session.get(self.base_url + link[1:])
         form_entries = re.findall(
-            r'<input type="hidden" name="(.*?)" id=".*" value="(.*)" />',
+            r'<input type="hidden" name="(.*?)" id=".*?" value="(.*?)" />',
             submission_page.text,
         )
 
         submit_data = re.findall(
-            r'<input type="submit" name="(.*)" value="(.*)" id=".*" class=".*" />',
+            r'<input type="submit" name="(.*?)" value="(.*?)" id=".*?" class=".*?" />',
             submission_page.text,
         )[0]
         form_entries.append(submit_data)
 
         input_key_name = re.findall(
-            r'<input name="(.*)" type="text" id=".*" placeholder=".*" />',
+            r'<input name="(.*?)" type="text" id=".*?" placeholder=".*?" />',
             submission_page.text,
         )[0]
         form_entries.append((input_key_name, code))
@@ -155,6 +157,10 @@ class APlus:
 
     @staticmethod
     def _reformat_attendance_time(string: str):
-        time_end = string.index("m") + 1
-        time = datetime.strptime(string[:time_end], "%I:%M %p")
-        return time.strftime("%I:%M %p") + string[time_end:]
+        (year, month, day, hour, minute, second, text) = re.search(
+            r'<script type="text/javascript">writeLocalTime\(Date\.UTC\((.+?),(.+?),(.+?),(.+?),(.+?),(.+?)\)\);</script>(.+?)$',
+            string,
+        ).groups()
+        time_utc = datetime(year=int(year), month=int(month), day=int(day), hour=int(hour), minute=int(minute), second=int(second), tzinfo=timezone.utc)
+        time_local = time_utc.astimezone(LOCAL_TIMEZONE)
+        return time_local.strftime("%I:%M %p") + text
