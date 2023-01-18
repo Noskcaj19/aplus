@@ -161,6 +161,6 @@ class APlus:
             r'<script type="text/javascript">writeLocalTime\(Date\.UTC\((.+?),(.+?),(.+?),(.+?),(.+?),(.+?)\)\);</script>(.+?)$',
             string,
         ).groups()
-        time_utc = datetime(year=int(year), month=int(month), day=int(day), hour=int(hour), minute=int(minute), second=int(second), tzinfo=timezone.utc)
+        time_utc = datetime(year=int(year), month=int(month)+1, day=int(day), hour=int(hour), minute=int(minute), second=int(second), tzinfo=timezone.utc)
         time_local = time_utc.astimezone(LOCAL_TIMEZONE)
         return time_local.strftime("%I:%M %p") + text
